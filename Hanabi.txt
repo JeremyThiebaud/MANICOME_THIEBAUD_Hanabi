@@ -1,0 +1,81 @@
+phase 1 :
+goal : 5 feux d'artifices de chaques couleur en faisant des suites croissantes avec des cartes de même couleur.
+exemple (solitaire à plusieurs) :
+Blanc1->Blanc2->Blanc3->Blanc4
+Bleu1->Bleu2
+Jaune1->Jaune2->Jaune3
+Rouge1
+Vert1->Vert2->Vert3->Vert4
+
+
+début:
+8 jetons bleu dans boite et 3 jetons rouges à coté
+50 cartes mélangées -> la pioche
+
+2 ou 3 joueurs -> 5 cartes à chaque joueur
+4 ou 5 joueurs -> 4 cartes à chaque joueur
+
+actions :
+-donner une info (-1 jeton bleu) :
+info sur une couleur OU une valeur (surligne les cartes qui correspondent)
+
+-défausser une carte (+1 jeton bleu):
+jette puis pioche une carte
+
+-jouer une carte:
+SI commence || continue un feu d'artifice:
+	on l'ajoute
+	SI une suite est finie:
+		+1 jeton bleu (pas de jeton en reserve=bonus nul)
+SINON
+	défaussée et +1 jeton rouge, puis pioche
+
+fin de partie :
+3 jetons rouges dans la boite = PERDU
+5 suites finies = MEGAWIN
+Meule totale = DERNIER TOUR, puis calcul score
+	calcul score = somme des valeurs max de chaque suite
+
+trucs : on peut toujours consulter la défausse
+
+
+classes :
+Main.java
+
+Player.java
+	champs :
+		ArrayList<Card> hand;
+	méthodes :
+		Look(); /* affiche la main de l'autre joueur */
+		
+		Discard(int i); /* défausse la carte d'index i*/
+		Play(int i); /* joue la carte d'indice i */
+		Tips(); /* donne une info à l'autre joueur */
+
+Reserve.java
+	champs :
+		ArrayList<Card> deck;
+		int redToken, blueToken;
+	méthodes :
+		boolean addRed(); /* ajoute un jeton rouge, renvoie True si 3 jetons rouges dans la reserve, False sinon */
+		int addBlue(); /* ajoute un jeton bleu si < 8, renvoie le nombre de jetons en reserve */
+		int subBlue(); /* retire un jeton bleu si > 0, renvoie le nombre de jetons en reserve */
+		Card Draw(); /* Extrait une carte du deck et la renvoie */
+
+CardColor.java
+	typeEnum Red, Blue, Green, White, Yellow
+	méthode : toString();
+
+Card.java
+	champs :
+		int value /* > 0 && < 6 */
+		CardColor color;
+	méthode :
+		getValue();
+		getColor();
+
+Board.java
+	champs :
+		ArrayList<ArrayList<Card>> columns /* liste des listes de cartes */
+	méthode :
+		score(); /* calcule le score */		
