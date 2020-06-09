@@ -13,14 +13,16 @@ public class GameController {
 	private final Board board;
 	private final ArrayList<Player> players;
 	private Card lastDiscard;
+	private final View view;
 	private boolean lastTurn;
 
-	public GameController(){
+	public GameController(View view){
 		this.reserve = new Reserve();
 		this.board = new Board();
 		this.players = new ArrayList<Player>();
 		this.lastDiscard = null;
 		this.lastTurn = false;
+		this.view = view;
 	}
 
 	private int selection(Scanner in, int min, int max) {
@@ -37,10 +39,10 @@ public class GameController {
 				correctInput = !excepts.contains(value) && value >= min && value <= max;
 
 				if (!correctInput) {
-					View.displayIndexError(min, max, excepts);
+					view.displayIndexError(min, max, excepts);
 				}
 			}catch(Exception e){
-				View.displayText("Wrong input !\nEnter a number :");
+				view.displayText("Wrong input !\nEnter a number :");
 				in.next(); /* discard the rejected input */
 			}
 		} while(!correctInput);
@@ -59,23 +61,23 @@ public class GameController {
 
 		reserve.subBlue();
 		if(players.size() > 2){
-			View.displayText("Select a player :");
+			view.displayText("Select a player :");
 			targetPlayer = players.get(selection(in, 0, players.size() - 1, List.of(playerIndex)));
 		} else{
 			targetPlayer = players.get((0 == playerIndex ? 1 : 0));
 		}
 		
-		View.displayValueOrColor();
+		view.displayValueOrColor();
 		switch (selection(in, 1, 2)) {
 			case 1:
-				View.displayOptions(targetPlayer.getValues());
-				View.displayText("What will be the value of the tipped cards ?");
-				View.displayTips(targetPlayer.getValues().get(selection(in, 1, targetPlayer.getValues().size()) -1), targetPlayer);
+				view.displayOptions(targetPlayer.getValues());
+				view.displayText("What will be the value of the tipped cards ?");
+				view.displayTips(targetPlayer.getValues().get(selection(in, 1, targetPlayer.getValues().size()) -1), targetPlayer);
 				break;
 			case 2:
-				View.displayOptions(targetPlayer.getColors());
-				View.displayText("What will be the color of the tipped cards ?");
-				View.displayTips(targetPlayer.getColors().get(selection(in, 1, CardColor.values().length) - 1), targetPlayer);
+				view.displayOptions(targetPlayer.getColors());
+				view.displayText("What will be the color of the tipped cards ?");
+				view.displayTips(targetPlayer.getColors().get(selection(in, 1, CardColor.values().length) - 1), targetPlayer);
 		}
 	}
 
@@ -83,13 +85,14 @@ public class GameController {
 	 * @return True if there are no more cards in the deck
 	 */
 	private boolean discard(Player p, Scanner in){
-		View.displayText("Enter the index of the card you want to discard");
+		view.displayText("Enter the index of the card you want to discard");
 		lastDiscard = p.useCard(selection(in, 0, p.getHandSize() -1));
 		reserve.addBlue();
 		try{
 			p.addCard(reserve.draw());
 			return false;
 		}catch(Exception e) {
+			view.displayText("No more cards to draw !\nOne last turn !");
 			return true;
 		}
 	}
@@ -98,23 +101,24 @@ public class GameController {
 	 * @return True if there are no more cards in the deck
 	 */
 	private boolean play(Player p, Scanner in){
-		View.displayText("Enter the index of your played card");
+		view.displayText("Enter the index of your played card");
 		Card played = p.useCard(selection(in, 0, p.getHandSize() - 1));
-		View.displayText("Here is the card you selected : "+played.toString());
+		view.displayText("Here is the card you selected : "+played.toString());
 
 		if(!board.putCard(played, played.getColor())){
 			reserve.addRed();
-			View.displayText("Card rejected !\nBe careful !");
-			View.displayText("You only have "+(Integer.toString(3-reserve.getRedTokens()))+" chances left !");
+			view.displayText("Card rejected !\nBe careful !");
+			view.displayText("You only have "+(Integer.toString(3-reserve.getRedTokens()))+" chances left !");
 		} else {
-			View.displayText("Card accepted !");
+			view.displayText("Card accepted !");
 		}
 
-		View.displayBoard(board);
+		view.displayBoard(board);
 		try {
 			p.addCard(reserve.draw());
 			return false;
 		} catch(Exception e) {
+			view.displayText("No more cards to draw !\nOne last turn !");
 			return true;
 		}
 
@@ -139,7 +143,7 @@ public class GameController {
 		int input;
 		boolean correctInput;
 		do{
-			View.displayChoice(reserve);
+			view.displayChoice(reserve);
 			input = playerSelection(in);
 			correctInput = true;
 			switch(input){ /* mettre input = in.nextLine() directement ici ?*/
@@ -154,16 +158,17 @@ public class GameController {
 					break;
 				default:
 					correctInput = false;
-					View.displayText("Wrong input");
+					view.displayText("Wrong input");
 			}
 		}while(!correctInput);
 	}
 
 	public int menu(){
 		Scanner in = new Scanner(System.in);
-		View.displayText("How many players ? (2 to 5)");
+		view.displayText("How many players ? (2 to 5)");
 
-		int nb_player = selection(in, 2, 5);
+		//int nb_player = selection(in, 2, 5);
+		int nb_player = 2;
 		for(int i = 0; i < nb_player; i++){
 			players.add(
 				new Player(reserve.draw((nb_player < 4)?5:4))
@@ -181,16 +186,16 @@ public class GameController {
 		while(!board.isFilled()){
 			for(Player p : players){
 				if(lastDiscard != null){
-					View.displayText("The last discarded card was :");
-					View.displayText(getDiscarded().toString());
+					view.displayText("The last discarded card was :");
+					view.displayText(getDiscarded().toString());
 				}
-				View.displayText("It's Player "+players.indexOf(p)+"'s turn !");
-				View.displayReserve(reserve);
-				View.displayText("Here is the hand of the other players :");
-				View.displayPlayers(players, players.indexOf(p));				
-				View.displayText("And here is your hand :");				
-				View.displayHand(p);
-				View.displayText("What do you want to do ?");
+				view.displayText("It's Player "+players.indexOf(p)+"'s turn !");
+				view.displayReserve(reserve);
+				view.displayText("Here is the hand of the other players :");
+				view.displayPlayers(players, players.indexOf(p));
+				view.displayText("And here is your hand :");
+				view.displayHand(p);
+				view.displayText("What do you want to do ?");
 				playerChoice(p, in);
 
 				if (lastTurn) remaining--;
@@ -203,12 +208,12 @@ public class GameController {
 		return endGame();
 	}
 	private int endGame(int score) {
-		View.displayText("You lost !\nScore: " + score);
+		view.displayText("You lost !\nScore: " + score);
 		return score;
 	}
 
 	private int endGame() {
-		View.displayText("Score: " + board.getScore());
+		view.displayText("Score: " + board.getScore());
 		return board.getScore();
 	}
 }

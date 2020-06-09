@@ -63,7 +63,6 @@ public class Reserve {
 		try {
 			return deck.remove(0);
 		} catch(Exception e){
-			View.displayText("No more cards to draw !\nOne last turn !");
 			throw new IllegalStateException();
 		}
 	}
