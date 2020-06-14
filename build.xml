@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="MANICOME_THIEBAUD_Hanabi" default="compile" basedir=".">
+    <property name="src.controller" value="${basedir}/fr/umlv/hanabi/controller"/>
+    <property name="src.model" value="${basedir}/fr/umlv/hanabi/model"/>
+    <property name="src.view" value="${basedir}/fr/umlv/hanabi/view"/>
+    <property name="lib.dir" value="${basedir}/src/lib"/>
+    <property name="classes.dir" value="${basedir}/src/classes"/>
+    <property name="docs.dir" value="${basedir}/src/docs/doc"/>
+
+    <path id="lib.path">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+
+    <target name="makedir">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${docs.dir}"/>
+    </target>
+
+    <target name="compile" depends="clean, makedir">
+        <javac srcdir="${src.model}" includes="**/*.java" destdir="${classes.dir}" classpathref="lib.path"/>
+        <javac srcdir="${src.view}" includes="**/*.java" destdir="${classes.dir}" classpathref="lib.path"/>
+        <javac srcdir="${src.controller}" includes="**/*.java" destdir="${classes.dir}" classpathref="lib.path"/>
+        <javac srcdir="${basedir}" includes="**/*.java" destdir="${classes.dir}" classpathref="lib.path"/>
+    </target>
+
+    <target name="jar" depends="compile">
+        <jar destfile="${basedir}\Hanabi.jar" basedir="${build.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="test.Main" />
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="javadoc">
+        <javadoc packagenames="fr.umlv.hanabi.controller" sourcepath="${src.controller}" destdir="${docs.dir}">
+            <fileset dir="${src.dir}">
+                <include name="**" />
+             </fileset>
+        </javadoc>
+        <javadoc packagenames="src" sourcepath="${src.model}" destdir="${docs.dir}">
+            <fileset dir="${src.dir}">
+                <include name="**" />
+             </fileset>
+        </javadoc>
+        <javadoc packagenames="src" sourcepath="${src.view}" destdir="${docs.dir}">
+            <fileset dir="${src.dir}">
+                <include name="**" />
+             </fileset>
+        </javadoc>
+    </target>
+
+    <target name="clean">
+        <delete dir="${classes.dir}"/>
+        <delete dir="${docs.dir}"/>
+    </target>
+</project>
+
