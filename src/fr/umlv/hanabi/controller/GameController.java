@@ -25,68 +25,42 @@ public class GameController {
 		this.view = view;
 	}
 
-	private int selection(Scanner in, int min, int max) {
-		return selection(in, min, max, List.of());
-	}
-
-	private int selection(Scanner in, int min, int max, List<Integer> excepts){
-		boolean correctInput = false;
-		int value = -1;
-
-		do{
-			try{
-				value = in.nextInt();
-				correctInput = !excepts.contains(value) && value >= min && value <= max;
-
-				if (!correctInput) {
-					view.displayIndexError(min, max, excepts);
-				}
-			}catch(Exception e){
-				view.displayText("Wrong input !\nEnter a number :");
-				in.next(); /* discard the rejected input */
-			}
-		} while(!correctInput);
-
-		return value;
-	}
-
 	/**
 	 * Lets the user choose which tip he want to give, he is allowed to be dumb
 	 * @param playerIndex Current turn's player index
-	 * @param in Scanner on standard input
 	 */
-	private void tipsChoice(int playerIndex, Scanner in){
+	protected void tipsChoice(int playerIndex){
 		int index;
 		Player targetPlayer;
 
 		reserve.subBlue();
-		if(players.size() > 2){
+		if(players.size() > 2) {
 			view.displayText("Select a player :");
-			targetPlayer = players.get(selection(in, 0, players.size() - 1, List.of(playerIndex)));
+			targetPlayer = players.get(view.selection(0, players.size() - 1, List.of(playerIndex)));
 		} else{
 			targetPlayer = players.get((0 == playerIndex ? 1 : 0));
 		}
 		
 		view.displayValueOrColor();
-		switch (selection(in, 1, 2)) {
+		switch (view.selection(1, 2)) {
 			case 1:
-				view.displayOptions(targetPlayer.getValues());
+				view.displayAvailableChoices(targetPlayer.getValues());
 				view.displayText("What will be the value of the tipped cards ?");
-				view.displayTips(targetPlayer.getValues().get(selection(in, 1, targetPlayer.getValues().size()) -1), targetPlayer);
+				view.displayTips(targetPlayer.getValues().get(view.selection(1, targetPlayer.getValues().size()) -1), targetPlayer);
 				break;
 			case 2:
-				view.displayOptions(targetPlayer.getColors());
+				view.displayAvailableChoices(targetPlayer.getColors());
 				view.displayText("What will be the color of the tipped cards ?");
-				view.displayTips(targetPlayer.getColors().get(selection(in, 1, CardColor.values().length) - 1), targetPlayer);
+				view.displayTips(targetPlayer.getColors().get(view.selection(1, CardColor.values().length) - 1), targetPlayer);
 		}
 	}
 
 	/**
 	 * @return True if there are no more cards in the deck
 	 */
-	private boolean discard(Player p, Scanner in){
+	protected boolean discard(Player p){
 		view.displayText("Enter the index of the card you want to discard");
-		lastDiscard = p.useCard(selection(in, 0, p.getHandSize() -1));
+		lastDiscard = p.useCard(view.selection(0, p.getHandSize() -1));
 		reserve.addBlue();
 		try{
 			p.addCard(reserve.draw());
@@ -100,9 +74,9 @@ public class GameController {
 	/**
 	 * @return True if there are no more cards in the deck
 	 */
-	private boolean play(Player p, Scanner in){
+	public boolean play(Player p){
 		view.displayText("Enter the index of your played card");
-		Card played = p.useCard(selection(in, 0, p.getHandSize() - 1));
+		Card played = p.useCard(view.selection(0, p.getHandSize() - 1));
 		view.displayText("Here is the card you selected : "+played.toString());
 
 		if(!board.putCard(played, played.getColor())){
@@ -128,59 +102,44 @@ public class GameController {
 		return lastDiscard;
 	}
 
-	private int playerSelection(Scanner in){
+	private int playerSelection(){
 		switch(reserve.getBlueTokens()){
 			case 8:
-				return selection(in, 1, 2);
+				return view.selection(1, 2);
 			case 0:
-				return selection(in, 1, 3, List.of(2));
+				return view.selection(1, 3, List.of(2));
 			default:
-				return selection(in, 1, 3);
+				return view.selection(1, 3);
 		}
 	}
 
-	private void playerChoice(Player p, Scanner in){
-		int input;
-		boolean correctInput;
-		do{
-			view.displayChoice(reserve);
-			input = playerSelection(in);
-			correctInput = true;
-			switch(input){ /* mettre input = in.nextLine() directement ici ?*/
-				case 1:
-					lastTurn = play(p, in);
-					break;
-				case 2:
-					tipsChoice(players.indexOf(p), in);
-					break;
-				case 3:
-					lastTurn = discard(p, in);
-					break;
-				default:
-					correctInput = false;
-					view.displayText("Wrong input");
-			}
-		}while(!correctInput);
+	private void playerChoice(Player p){
+		List<Option> options = new ArrayList<>();
+		options.add(new Option("Engage a card", true, () -> play(p)));
+		options.add(new Option("Give a tip", reserve.getBlueTokens() > 0, () -> tipsChoice(players.indexOf(p), in)));
+		options.add(new Option("Discard", reserve.getBlueTokens() < 8, () -> discard(p)));
+
+		view.displayOptions(options);
 	}
 
 	public int menu(){
 		Scanner in = new Scanner(System.in);
 		view.displayText("How many players ? (2 to 5)");
 
-		//int nb_player = selection(in, 2, 5);
+		//int nb_player = view.selection(in, 2, 5);
 		int nb_player = 2;
 		for(int i = 0; i < nb_player; i++){
 			players.add(
 				new Player(reserve.draw((nb_player < 4)?5:4))
 			);
 		}
-		return gameLoop(in);
+		return gameLoop();
 	}
 
 	/**
 	 * @return the score when the game ends
 	 */
-	public int gameLoop(Scanner in){
+	public int gameLoop(){
 		int remaining = players.size();
 
 		while(!board.isFilled()){
@@ -196,7 +155,7 @@ public class GameController {
 				view.displayText("And here is your hand :");
 				view.displayHand(p);
 				view.displayText("What do you want to do ?");
-				playerChoice(p, in);
+				playerChoice(p);
 
 				if (lastTurn) remaining--;
 				if (reserve.getRedTokens() == 3)

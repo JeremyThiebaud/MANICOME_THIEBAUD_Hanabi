@@ -7,8 +7,7 @@ import fr.umlv.hanabi.model.Reserve;
 
 import java.util.List;
 
-public interface ViewInterface {
-    void displayChoice(Reserve r);
+public interface ViewInterface<E> {
     void displayBoard(Board b);
     void displayHand(Player p);
     void displayReserve(Reserve r);
@@ -17,6 +16,8 @@ public interface ViewInterface {
     void displayValueOrColor();
     void displayText(String text);
     void displayPlayers(List<Player> players, int playerIndex);
-    void displayOptions(List values);
+    Option displayOptions(List<Option> values);
     void displayIndexError(int min, int max, List<Integer> exceptions);
+    int selection(int min, int max, List<Integer> exceptions);
+    int selection(int min, int max);
 }

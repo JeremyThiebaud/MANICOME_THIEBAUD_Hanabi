@@ -11,7 +11,6 @@ import fr.umlv.zen5.Event;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,22 +28,32 @@ public class ZenView extends View implements ViewInterface {
     }
 
     @Override
-    public void displayChoice(Reserve r) {
-        HashMap<String, Boolean> options = new HashMap<>();
-        options.put("Engage a card", true);
-        options.put("Give a tip", r.getBlueTokens() > 0);
-        options.put("Discard", r.getBlueTokens() < 8);
-
-        List <Button> buttons = createButtons(options);
-        buttons.forEach(System.out::println);
+    public Option displayOptions(List<Option> options) {
+        List<Button> buttons = createButtons(options);
         drawButtons(buttons);
         Button clicked = listenButton(buttons);
-        System.out.println(clicked.getValue());
+        clicked.getOption().getChoiceProcessor().process();
+        return clicked.getOption();
     }
 
     @Override
     public void displayBoard(Board b) {
 
+    }
+
+    public int selection(int min, int max) {
+        return selection(min, max, List.of());
+    }
+
+    public int selection(int min, int max, List<Integer> exceptions){
+        List<Option> options = new ArrayList<>();
+
+        for (int i = min; i < max; i++) {
+            options.add(new Option<Integer>(i, exceptions.contains(i), () -> {}));
+        }
+
+        Option<Integer> selected = displayOptions(options);
+        return selected.getValue();
     }
 
     @Override
@@ -87,16 +96,11 @@ public class ZenView extends View implements ViewInterface {
     }
 
     @Override
-    public void displayOptions(List values) {
-
-    }
-
-    @Override
     public void displayIndexError(int min, int max, List<Integer> exceptions) {
 
     }
 
-    public List<Button> createButtons(HashMap<String, Boolean> options) {
+    public List<Button> createButtons(List<Option> options) {
         AtomicInteger i = new AtomicInteger();
         double x = this.width / 4;
         double height = this.height / (3 * options.size()); // one third of screen for buttons
@@ -105,9 +109,9 @@ public class ZenView extends View implements ViewInterface {
 
         List<Button> buttons = new ArrayList<>();
 
-        options.forEach((k, v) -> {
+        options.forEach((o) -> {
             double y = i.get() * (yOffset + height) + yOffset;
-            buttons.add(new Button(k, x, y, width, height, v));
+            buttons.add(new Button(o, x, y, width, height));
             i.getAndIncrement();
         });
 
@@ -123,7 +127,7 @@ public class ZenView extends View implements ViewInterface {
                     graphics2D.setColor(Color.LIGHT_GRAY);
 
                 graphics2D.draw3DRect(b.getXAsInt(), b.getYAsInt(), b.getWidthAsInt(), b.getHeightAsInt(), b.isEnabled());
-                graphics2D.drawString(b.getValue().toString(), this.width / 2, (float) (b.getY() + b.getHeight() / 2));
+                graphics2D.drawString(b.getValue(), this.width / 2, (float) (b.getY() + b.getHeight() / 2));
             });
         });
     }
